@@ -48,23 +48,17 @@ The workflow file is already added here:
 Do not upload a real .env file or API keys to GitHub. The ZIP provided for this
 setup contains .env.example (a template), not your private credentials.
 
-PART B — Create the Hugging Face Space (manual step)
-----------------------------------------------------
-The connected Hugging Face identity currently available to this setup is
-@devArv, but it has read-only repository permissions through the connection.
-For that reason, create the Space and write token in the website manually.
+PART B — Hugging Face Space creation (automated)
+-------------------------------------------------
+You do NOT need to create the Space manually. After the ZIP and GitHub secret
+are ready, the GitHub Actions workflow creates this Space as PRIVATE with the
+Docker SDK, if it does not already exist:
 
-1. Open https://huggingface.co/new-space
-2. Space name: gods-eye-view
-3. Owner/account: devArv
-4. SDK: Docker
-5. Visibility: PRIVATE (recommended because the app includes server-side
-   provider routes; a public deployment could let strangers consume your
-   configured provider quotas).
-6. Click Create Space.
-
-Expected Space address:
 https://huggingface.co/spaces/devArv/gods-eye-view
+
+If that Space already exists, open its Settings and confirm its visibility is
+PRIVATE before deploying. The workflow does not change the visibility of an
+already-existing Space.
 
 PART C — Make a Hugging Face write token (manual step)
 ------------------------------------------------------
@@ -90,7 +84,8 @@ time. Do not put the token directly into the YAML file.
 PART E — Run deployment
 -----------------------
 If you uploaded the ZIP after adding the secret, it should already have
-triggered a run.
+triggered a run. The workflow will create the private Docker Space automatically
+if it does not already exist.
 
 If not:
 1. Open the repository's Actions tab.
