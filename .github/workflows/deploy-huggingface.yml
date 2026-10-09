@@ -1,0 +1,98 @@
+name: Deploy God's Eye View to Hugging Face
+
+on:
+  push:
+    paths:
+      - "GodsEyeView-FreeEdition.zip"
+      - ".github/workflows/deploy-huggingface.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-gods-eye-view
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout deployment wrapper
+        uses: actions/checkout@v4
+
+      - name: Check required inputs
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          test -n "$HF_TOKEN" || { echo "::error::Missing GitHub Actions secret HF_TOKEN"; exit 1; }
+          test -f "GodsEyeView-FreeEdition.zip" || { echo "::error::Upload GodsEyeView-FreeEdition.zip to the repository root first"; exit 1; }
+
+      - name: Unpack application
+        run: |
+          mkdir -p extracted deploy
+          unzip -q "GodsEyeView-FreeEdition.zip" -d extracted
+          test -f "extracted/GodsEyeView-FreeEdition/package.json" || {
+            echo "::error::ZIP structure did not contain GodsEyeView-FreeEdition/package.json"
+            find extracted -maxdepth 3 -name package.json -print
+            exit 1
+          }
+          cp -a extracted/GodsEyeView-FreeEdition/. deploy/
+          rm -f deploy/.env deploy/.env.local deploy/.env.production deploy/.env.production.local
+          test -f deploy/package-lock.json || { echo "::error::package-lock.json is missing"; exit 1; }
+
+      - name: Add Hugging Face Docker Space configuration
+        run: |
+          cat > deploy/Dockerfile <<'DOCKER'
+          FROM node:24-bookworm-slim
+          WORKDIR /app
+          COPY package.json package-lock.json ./
+          RUN npm ci
+          COPY . .
+          ENV HOST=0.0.0.0
+          ENV PORT=7860
+          ENV GEV_ALLOWED_HOSTS=devarv-gods-eye-view.hf.space
+          ENV OPENSKY_AUTH_MODE=anon
+          EXPOSE 7860
+          CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "7860", "--strictPort"]
+          DOCKER
+          cat > deploy/README.md <<'README'
+          ---
+          title: God's Eye View Free Edition
+          emoji: 🌍
+          colorFrom: blue
+          colorTo: indigo
+          sdk: docker
+          app_port: 7860
+          pinned: false
+          ---
+          
+          Private deployment of the user-supplied God's Eye View Free Edition.
+          
+          API keys are optional. Add provider keys in the Space Settings → Variables and secrets only if you need those features. Never commit a real .env file or API keys.
+          
+          Review LICENSE, DATA_SOURCES.md and FREE-EDITION.md for attribution and data-license restrictions.
+          README
+
+      - name: Validate deployment files
+        run: |
+          test -s deploy/Dockerfile
+          test -s deploy/package.json
+          test -s deploy/package-lock.json
+          test ! -f deploy/.env
+          echo "Deployment staging looks ready."
+
+      - name: Push Docker Space to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd deploy
+          git init
+          git checkout -b main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy God's Eye View Free Edition from GitHub Actions"
+          git remote add hf "https://devArv:${HF_TOKEN}@huggingface.co/spaces/devArv/gods-eye-view"
+          git push --force hf HEAD:main
