@@ -54,7 +54,7 @@ You do NOT need to create the Space manually. After the ZIP and GitHub secret
 are ready, the GitHub Actions workflow creates this Space as PRIVATE with the
 Docker SDK, if it does not already exist:
 
-https://huggingface.co/spaces/devArv/gods-eye-view
+https://huggingface.co/spaces/devArv/ReelForge
 
 If that Space already exists, open its Settings and confirm its visibility is
 PRIVATE before deploying. The workflow does not change the visibility of an
@@ -97,7 +97,7 @@ Open the run and inspect each step. A successful run ends with the step
 creates a Dockerfile for port 7860, and pushes the source to the Space.
 
 Then open:
-https://huggingface.co/spaces/devArv/gods-eye-view
+https://huggingface.co/spaces/devArv/ReelForge
 
 The first Docker build may take several minutes while npm installs packages.
 If the Space is private, you must be logged in to the authorized Hugging Face
@@ -149,7 +149,7 @@ B) Workflow says HF_TOKEN missing:
    HF_TOKEN (uppercase, underscore, no spaces).
 
 C) Hugging Face says repository not found / permission denied:
-   Confirm the Space owner/name is devArv/gods-eye-view, the Space exists,
+   Confirm the Space owner/name is devArv/ReelForge, the Space exists,
    and the token has write permission.
 
 D) Build fails during npm ci:
@@ -157,7 +157,7 @@ D) Build fails during npm ci:
    paste secrets or token values. Node 24 is used by the generated Dockerfile.
 
 E) Space starts but shows a 403 "Blocked request. This host is not allowed":
-   The deployment sets GEV_ALLOWED_HOSTS to devarv-gods-eye-view.hf.space.
+   The deployment sets GEV_ALLOWED_HOSTS to devarv-reelforge.hf.space.
    If Hugging Face assigns a different hostname, update that value in the
    workflow's Dockerfile section and rerun deployment.
 
