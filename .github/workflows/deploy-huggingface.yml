@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - "GodsEyeView-FreeEdition.zip"
-      - ".github/workflows/deploy-huggingface.yml"
   workflow_dispatch:
 
 permissions:
@@ -48,6 +47,7 @@ jobs:
           FROM node:24-bookworm-slim
           WORKDIR /app
           COPY package.json package-lock.json ./
+          ENV PUPPETEER_SKIP_DOWNLOAD=true
           RUN npm ci
           COPY . .
           ENV HOST=0.0.0.0
