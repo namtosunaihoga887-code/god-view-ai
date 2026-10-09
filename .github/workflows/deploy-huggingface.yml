@@ -83,6 +83,25 @@ jobs:
           test ! -f deploy/.env
           echo "Deployment staging looks ready."
 
+      - name: Create private Hugging Face Space if needed
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -m pip install --quiet huggingface_hub
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.create_repo(
+              repo_id="devArv/gods-eye-view",
+              repo_type="space",
+              space_sdk="docker",
+              private=True,
+              exist_ok=True,
+          )
+          print("Hugging Face Space exists or was created.")
+          PY
+
       - name: Push Docker Space to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
