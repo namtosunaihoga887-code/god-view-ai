@@ -24,8 +24,10 @@ jobs:
       - name: Check required inputs
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
         run: |
           test -n "$HF_TOKEN" || { echo "::error::Missing GitHub Actions secret HF_TOKEN"; exit 1; }
+          test -n "$HF_SPACE_ID" || { echo "::error::Missing Actions variable HF_SPACE_ID (example: devArv/ReelForge)"; exit 1; }
           test -f "GodsEyeView-FreeEdition.zip" || { echo "::error::Upload GodsEyeView-FreeEdition.zip to the repository root first"; exit 1; }
 
       - name: Unpack application
@@ -52,7 +54,7 @@ jobs:
           COPY . .
           ENV HOST=0.0.0.0
           ENV PORT=7860
-          ENV GEV_ALLOWED_HOSTS=devarv-gods-eye-view.hf.space
+          ENV GEV_ALLOWED_HOSTS=placeholder.hf.space
           ENV OPENSKY_AUTH_MODE=anon
           EXPOSE 7860
           CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "7860", "--strictPort"]
@@ -86,32 +88,40 @@ jobs:
       - name: Create private Hugging Face Space if needed
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
         run: |
           python -m pip install --quiet huggingface_hub
           python - <<'PY'
           import os
           from huggingface_hub import HfApi
+          space_id = os.environ["HF_SPACE_ID"].strip()
+          if "/" not in space_id:
+              raise SystemExit("HF_SPACE_ID must be OWNER/SPACE_NAME, for example devArv/ReelForge")
           api = HfApi(token=os.environ["HF_TOKEN"])
           api.create_repo(
-              repo_id="devArv/gods-eye-view",
+              repo_id=space_id,
               repo_type="space",
               space_sdk="docker",
               private=True,
               exist_ok=True,
           )
-          print("Hugging Face Space exists or was created.")
+          print(f"Hugging Face Space exists or was created: {space_id}")
           PY
+          SPACE_SLUG="$(printf '%s' "$HF_SPACE_ID" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
+          echo "GEV_ALLOWED_HOSTS=$SPACE_SLUG.hf.space" >> "$GITHUB_ENV"
 
       - name: Push Docker Space to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
         run: |
           cd deploy
+          sed -i "s/placeholder.hf.space/$GEV_ALLOWED_HOSTS/" Dockerfile
           git init
           git checkout -b main
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Deploy God's Eye View Free Edition from GitHub Actions"
-          git remote add hf "https://devArv:${HF_TOKEN}@huggingface.co/spaces/devArv/gods-eye-view"
+          git remote add hf "https://hf_user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_ID}"
           git push --force hf HEAD:main
