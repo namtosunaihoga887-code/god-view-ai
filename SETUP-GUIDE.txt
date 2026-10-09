@@ -1,0 +1,207 @@
+GOD'S EYE VIEW — GITHUB ACTIONS + HUGGING FACE SETUP
+====================================================
+
+What we are building
+--------------------
+Your GitHub repository is the source/deployment controller.
+GitHub Actions will unpack the ZIP and send the application to a Hugging Face
+Docker Space. Hugging Face will run the web application, so you do NOT need
+to install Node.js or run the project on your own Windows PC for this cloud
+deployment.
+
+GitHub Actions is not itself a permanent website host. Hugging Face Spaces
+runs the actual app.
+
+Important truth about "without API"
+-----------------------------------
+The supplied Free Edition says API keys are optional. Without keys, the globe
+and several public/keyless layers can still work. Some extra features are
+disabled until you add their provider key:
+- Cesium ion: photorealistic 3D tiles/terrain
+- Gemini: voice control
+- Groq: AI summary line
+- AISStream: live ships
+- NASA FIRMS: wildfire feed
+- TomTom: live traffic
+- OpenSky credentials: optional extra flight access
+
+So: no paid API is required just to try the app, but "every feature with no
+provider keys" cannot be promised. Free provider quotas and terms can change.
+
+PART A — GitHub repository
+--------------------------
+Repository prepared for this deployment:
+https://github.com/namtosunaihoga887-code/god-view-ai
+
+1. Open the repository link and sign in to GitHub.
+2. At the repository root, click Add file -> Upload files.
+3. Upload your original ZIP exactly as:
+       GodsEyeView-FreeEdition.zip
+   Do not rename it. Do not put it inside another folder.
+4. Click Commit changes.
+5. GitHub Actions should start automatically because the workflow watches this
+   ZIP path. You can later open the Actions tab to see logs.
+
+The workflow file is already added here:
+.github/workflows/deploy-huggingface.yml
+
+Do not upload a real .env file or API keys to GitHub. The ZIP provided for this
+setup contains .env.example (a template), not your private credentials.
+
+PART B — Create the Hugging Face Space (manual step)
+----------------------------------------------------
+The connected Hugging Face identity currently available to this setup is
+@devArv, but it has read-only repository permissions through the connection.
+For that reason, create the Space and write token in the website manually.
+
+1. Open https://huggingface.co/new-space
+2. Space name: gods-eye-view
+3. Owner/account: devArv
+4. SDK: Docker
+5. Visibility: PRIVATE (recommended because the app includes server-side
+   provider routes; a public deployment could let strangers consume your
+   configured provider quotas).
+6. Click Create Space.
+
+Expected Space address:
+https://huggingface.co/spaces/devArv/gods-eye-view
+
+PART C — Make a Hugging Face write token (manual step)
+------------------------------------------------------
+1. Open https://huggingface.co/settings/tokens
+2. Create a new token with WRITE access to repositories/Spaces. Use the
+   narrowest available permission that allows writing to the new Space.
+3. Copy the token once and keep it private. Do not paste it in chat, README,
+   source code, or a committed file.
+
+PART D — Add the token as a GitHub Actions secret
+-------------------------------------------------
+1. Open:
+   https://github.com/namtosunaihoga887-code/god-view-ai/settings/secrets/actions
+2. Click New repository secret.
+3. Name it exactly:
+       HF_TOKEN
+4. Paste the Hugging Face write token as the secret value.
+5. Save.
+
+GitHub stores the secret encrypted and passes it to the workflow only at run
+time. Do not put the token directly into the YAML file.
+
+PART E — Run deployment
+-----------------------
+If you uploaded the ZIP after adding the secret, it should already have
+triggered a run.
+
+If not:
+1. Open the repository's Actions tab.
+2. Choose "Deploy God's Eye View to Hugging Face".
+3. Click Run workflow -> Run workflow.
+
+Open the run and inspect each step. A successful run ends with the step
+"Push Docker Space to Hugging Face" completed. The workflow unpacks the ZIP,
+creates a Dockerfile for port 7860, and pushes the source to the Space.
+
+Then open:
+https://huggingface.co/spaces/devArv/gods-eye-view
+
+The first Docker build may take several minutes while npm installs packages.
+If the Space is private, you must be logged in to the authorized Hugging Face
+account to view it.
+
+PART F — Optional provider keys (only if you want those features)
+-----------------------------------------------------------------
+Add keys on the Hugging Face Space, not in GitHub files:
+
+1. Open the Space -> Settings -> Variables and secrets.
+2. Add each needed item as a SECRET, using the exact variable name:
+   CESIUM_ION_TOKEN
+   GEMINI_API_KEY
+   GROQ_API_KEY
+   AISSTREAM_API_KEY
+   FIRMS_MAP_KEY
+   TOMTOM_API_KEY
+   OPENSKY_AUTH_MODE
+   OPENSKY_CLIENT_ID
+   OPENSKY_CLIENT_SECRET
+
+3. For OpenSky, if you do not have credentials, leave the client ID/secret
+   empty; this deployment defaults to anonymous mode.
+4. Save the secrets. Restart/rebuild the Space if Hugging Face does not apply
+   new environment values immediately.
+
+Only add a key if you need its feature. Review each provider's free tier,
+privacy terms, and usage limits before enabling it. In particular, do not say
+private information to voice services.
+
+Useful official key pages
+-------------------------
+Cesium ion: https://ion.cesium.com/tokens
+Gemini:     https://aistudio.google.com/apikey
+Groq:       https://console.groq.com/keys
+AISStream:  https://aisstream.io
+NASA FIRMS: https://firms.modaps.eosdis.nasa.gov/api/map_key/
+TomTom:     https://developer.tomtom.com
+OpenSky:    https://opensky-network.org/my-opensky/account
+
+Troubleshooting
+---------------
+A) Workflow says ZIP missing:
+   Confirm the file is at the repository root and named exactly
+   GodsEyeView-FreeEdition.zip.
+
+B) Workflow says HF_TOKEN missing:
+   Check Settings -> Secrets and variables -> Actions. Secret name must be
+   HF_TOKEN (uppercase, underscore, no spaces).
+
+C) Hugging Face says repository not found / permission denied:
+   Confirm the Space owner/name is devArv/gods-eye-view, the Space exists,
+   and the token has write permission.
+
+D) Build fails during npm ci:
+   Open the failed Actions run and copy the first actual npm error. Do not
+   paste secrets or token values. Node 24 is used by the generated Dockerfile.
+
+E) Space starts but shows a 403 "Blocked request. This host is not allowed":
+   The deployment sets GEV_ALLOWED_HOSTS to devarv-gods-eye-view.hf.space.
+   If Hugging Face assigns a different hostname, update that value in the
+   workflow's Dockerfile section and rerun deployment.
+
+F) App loads but a feature is unavailable:
+   This is expected for features that need an optional provider key. Check the
+   provider's key name in Part F and the Space logs.
+
+G) To deploy an updated ZIP:
+   Upload/replace GodsEyeView-FreeEdition.zip in the GitHub repository and
+   commit it. The workflow runs again and replaces the Space's main branch
+   with the generated deployment. Do not manually edit the Space source if
+   you intend GitHub to remain the source of truth.
+
+Security, licensing and responsible use
+---------------------------------------
+- The workflow removes .env files before deployment and never asks you to
+  commit provider secrets.
+- Keep the Hugging Face Space private unless you have reviewed the server
+  endpoints, provider quotas and access controls for public use.
+- This project combines public data; it is not a real satellite and cannot see
+  people through walls or magically provide live high-resolution imagery.
+- Use public data responsibly. Do not use the tool to stalk, harass, or target
+  a real person.
+- Read the ZIP's LICENSE, DATA_SOURCES.md, THIRD_PARTY_NOTICES.md and
+  FREE-EDITION.md. Some bundled datasets have their own restrictions, including
+  non-commercial restrictions. Do not assume the entire bundle is cleared for
+  commercial use merely because the code has an MIT license.
+
+What is done vs what you must do
+--------------------------------
+DONE in GitHub:
+- README with deployment overview
+- GitHub Actions deployment workflow
+
+YOU must do in the websites:
+- Upload the 17 MB ZIP to the GitHub repository root
+- Create the private Docker Space on Hugging Face
+- Create a Hugging Face write token
+- Save it in GitHub Actions as HF_TOKEN
+- Optionally add provider keys as Hugging Face Space secrets
+
+After these steps, GitHub Actions handles future deployments automatically.
