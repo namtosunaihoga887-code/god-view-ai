@@ -1,0 +1,99 @@
+================================================================================
+          GOD'S EYE VIEW - COMPLETE SETUP GUIDE / गाइड
+          GitHub Actions + GitHub Pages + Hugging Face Spaces
+================================================================================
+
+[HINDI / HINGLISH GUIDE]
+
+Yeh guide aapko step-by-step samjhayegi ki bina kisi coding knowledge ke God's Eye View ko GitHub Actions, GitHub Pages, aur Hugging Face Spaces par kaise setup karna hai.
+
+--------------------------------------------------------------------------------
+STEP 1: FREE API KEYS HÁSIL KAREIN (PURI TARAH SE MUFT)
+--------------------------------------------------------------------------------
+
+Aapko nimnlikhit services se apni free API keys leni hain:
+
+1. Gemini API Key (Voice Agent ke liye):
+   - Website: https://aistudio.google.com/apikey
+   - "Create API Key" par click karein aur key copy karein.
+
+2. Cesium ion Token (3D Globe ke liye):
+   - Website: https://ion.cesium.com/tokens
+   - Account banayein, "Create Token" par click karein aur token copy karein.
+
+3. Groq API Key (HUD Summaries ke liye):
+   - Website: https://console.groq.com/keys
+   - "Create API Key" par click karein aur key copy karein.
+
+4. NASA FIRMS Key (Live Wildfires ke liye):
+   - Website: https://firms.modaps.eosdis.nasa.gov/api/map_key/
+   - Apna email dalein, key aapke inbox me aayegi.
+
+5. AISStream API Key (Ship Tracking ke liye):
+   - Website: https://aisstream.io
+   - GitHub se sign in karein aur API key generate karein.
+
+6. TomTom API Key (Live Traffic ke liye):
+   - Website: https://developer.tomtom.com
+   - Register karein aur Traffic Flow/API enable karke key copy karein.
+
+
+--------------------------------------------------------------------------------
+STEP 2: GITHUB PAR CODE PUSH KAREIN & SECRETS ADD KAREIN
+--------------------------------------------------------------------------------
+
+1. Apna ek GitHub Repository banayein (public ya private).
+2. Is code ko apne GitHub repository me push karein.
+3. GitHub Repo me "Settings" tab par jayein.
+4. Left sidebar me "Secrets and variables" -> "Actions" par click karein.
+5. "New repository secret" par click karke ye Secrets add karein:
+
+   - VITE_GEMINI_API_KEY
+   - VITE_CESIUM_ION_TOKEN
+   - VITE_GROQ_API_KEY
+   - VITE_FIRMS_MAP_KEY
+   - VITE_AISSTREAM_API_KEY
+   - VITE_TOMTOM_API_KEY
+
+
+--------------------------------------------------------------------------------
+STEP 3: GITHUB PAGES ENABLES KAREIN (FREE HOSTING)
+--------------------------------------------------------------------------------
+
+1. GitHub Repository ki "Settings" me jayein.
+2. Left sidebar me "Pages" par click karein.
+3. "Build and deployment" -> "Source" me "GitHub Actions" select karein.
+4. Jab bhi aap main branch par push karenge, GitHub Action automatic site build karke deploy kar dega!
+5. Aapki website <username>.github.io/<repository-name> par live ho jayegi.
+
+
+--------------------------------------------------------------------------------
+STEP 4: HUGGING FACE SPACES PAR DEPLOY KAREIN
+--------------------------------------------------------------------------------
+
+1. Hugging Face (https://huggingface.co) par account banayein.
+2. "New Space" par click karein:
+   - Space Name rakhein (jaise: gods-eye-view).
+   - SDK me "Static HTML" ya "Docker" select karein.
+3. Hugging Face Settings (https://huggingface.co/settings/tokens) me jayein:
+   - "Create new token" (Role: Write) banayein aur copy karein.
+4. Apne GitHub Repository ke Settings -> Secrets and variables -> Actions me jayein:
+   - Token secret add karein:
+     Secret Name: HF_TOKEN
+     Value: (Aapka Hugging Face Write Token)
+   - Space URL secret add karein:
+     Secret Name: HF_SPACE_URL
+     Value: https://huggingface.co/spaces/<your-hf-username>/<your-space-name>
+5. GitHub Action (`.github/workflows/huggingface.yml`) automatic aapke Hugging Face Space ko sync aur update kar dega!
+
+
+--------------------------------------------------------------------------------
+SUMMARY OF WORKFLOWS CREATED IN THIS REPO:
+--------------------------------------------------------------------------------
+1. `.github/workflows/deploy.yml`:
+   - Automatically builds the application with Vite and deploys it to GitHub Pages.
+2. `.github/workflows/huggingface.yml`:
+   - Automatically syncs the latest code to your Hugging Face Space.
+
+Enjoy God's Eye View completely free with GitHub Actions & Hugging Face!
+================================================================================

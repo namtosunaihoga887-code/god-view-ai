@@ -1,0 +1,29 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_URL: ${{ secrets.HF_SPACE_URL }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_URL" ]; then
+            echo "HF_TOKEN or HF_SPACE_URL secret is not set. Please set them in your GitHub repo secrets to enable Hugging Face deployment."
+            exit 0
+          fi
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git remote add hf "$HF_SPACE_URL" || git remote set-url hf "$HF_SPACE_URL"
+          git push -f https://user:$HF_TOKEN@${HF_SPACE_URL#https://} HEAD:main
